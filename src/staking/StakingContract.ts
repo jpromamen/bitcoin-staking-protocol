@@ -374,5 +374,37 @@ private _callTransferFrom(token: Address, from: Address, to: Address, amount: u2
     protected _u256ToAddress(val: u256): Address {
         if (val.isZero()) return Address.zero();
         return Address.fromUint8Array(val.toUint8Array(true));
-    }
+    }@method({ name: 'amount', type: ABIDataTypes.UINT256 })
+@returns()
+public compound(_calldata: Calldata): BytesWriter {
+    const caller = Blockchain.tx.sender;
+    const callerKey = this._addressToU256(caller);
+
+    const userStake = this.stakedBalance.get(callerKey);
+    if (userStake.isZero()) throw new Revert('Nothing staked');
+
+    this._updatePool();
+
+    const accRPS = this.accRewardPerShareMap.get(u256.Zero);
+    const PRECISION = this._precision();
+    const debt = this.rewardDebt.get(callerKey);
+    const pending = SafeMath.sub(
+        SafeMath.div(SafeMath.mul(userStake, accRPS), PRECISION),
+        debt
+    );
+
+    if (pending.isZero()) throw new Revert('No rewards to compound');
+
+    const reserve = this.rewardReserveMap.get(u256.Zero);
+    if (u256.lt(reserve, pending)) throw new Revert('Insufficient reward reserve');
+
+    this.rewardReserveMap.set(u256.Zero, SafeMath.sub(reserve, pending));
+
+    const newStake = SafeMath.add(userStake, pending);
+    this.stakedBalance.set(callerKey, newStake);
+    this.rewardDebt.set(callerKey, SafeMath.div(SafeMath.mul(newStake, accRPS), PRECISION));
+    this.totalStakedMap.set(u256.Zero, SafeMath.add(this.totalStakedMap.get(u256.Zero), pending));
+
+    return new BytesWriter(0);
+}
 }
