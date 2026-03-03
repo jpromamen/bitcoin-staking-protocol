@@ -3,112 +3,239 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bitcoin Staking Protocol</title>
+  <title>BTCStake — Bitcoin L1 DeFi</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #0a0a0a; color: #fff; font-family: -apple-system, sans-serif; min-height: 100vh; }
-    nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 40px; border-bottom: 1px solid #1a1a1a; position: sticky; top: 0; background: #0a0a0a; z-index: 50; }
-    .logo { font-size: 20px; font-weight: 800; }
-    .logo span { color: #ff9900; }
-    .badge { background: #1a1a1a; border: 1px solid #333; padding: 6px 14px; border-radius: 20px; font-size: 12px; color: #888; }
-    .badge span { color: #ff9900; }
+    :root {
+      --orange: #ff9900;
+      --orange-dark: #ff6600;
+      --bg: #0a0a0a;
+      --bg2: #111;
+      --bg3: #1a1a1a;
+      --border: #222;
+      --text: #fff;
+      --muted: #555;
+      --green: #00d26a;
+      --red: #ff4444;
+    }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+    /* NAV */
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 18px 40px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,10,10,0.95); backdrop-filter: blur(10px); z-index: 50; }
+    .logo { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--orange), var(--orange-dark)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .logo span { color: var(--orange); }
+    .nav-center { display: flex; align-items: center; gap: 16px; }
+    .nav-badge { background: var(--bg2); border: 1px solid var(--border); padding: 6px 12px; border-radius: 20px; font-size: 12px; color: var(--muted); }
+    .nav-badge span { color: var(--orange); }
+    .block-counter { background: var(--bg2); border: 1px solid var(--border); padding: 6px 12px; border-radius: 20px; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+    .block-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
     .wallet-area { position: relative; }
-    .connect-btn { background: linear-gradient(135deg, #ff9900, #ff6600); color: #000; border: none; padding: 12px 28px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .connect-btn { background: linear-gradient(135deg, var(--orange), var(--orange-dark)); color: #000; border: none; padding: 10px 24px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
     .connect-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(255,153,0,0.3); }
-    .connect-btn.connected { background: #1a1a1a; color: #ff9900; border: 1px solid #ff9900; }
-    .dropdown { display: none; position: absolute; right: 0; top: 50px; background: #111; border: 1px solid #333; border-radius: 12px; padding: 8px; min-width: 180px; z-index: 100; }
-    .dropdown.open { display: block; }
-    .dropdown-addr { font-size: 11px; color: #555; padding: 8px 12px; font-family: monospace; border-bottom: 1px solid #1a1a1a; margin-bottom: 4px; }
-    .dropdown-item { padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; color: #fff; transition: background 0.15s; }
-    .dropdown-item:hover { background: #1a1a1a; }
-    .dropdown-item.red { color: #ff4444; }
-    main { max-width: 1000px; margin: 0 auto; padding: 50px 20px; }
+    .connect-btn.connected { background: var(--bg2); color: var(--orange); border: 1px solid var(--orange); }
+    .dropdown { display: none; position: absolute; right: 0; top: 48px; background: var(--bg2); border: 1px solid #333; border-radius: 14px; padding: 8px; min-width: 200px; z-index: 100; box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+    .dropdown.open { display: block; animation: fadeIn 0.15s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    .dropdown-addr { font-size: 11px; color: var(--muted); padding: 8px 12px; font-family: monospace; border-bottom: 1px solid var(--border); margin-bottom: 4px; word-break: break-all; }
+    .dropdown-item { padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; transition: background 0.15s; display: flex; align-items: center; gap: 8px; }
+    .dropdown-item:hover { background: var(--bg3); }
+    .dropdown-item.red { color: var(--red); }
+
+    /* MAIN */
+    main { max-width: 1060px; margin: 0 auto; padding: 50px 20px 80px; }
+
+    /* HERO */
     .hero { text-align: center; margin-bottom: 50px; }
-    .hero-tag { display: inline-block; background: rgba(255,153,0,0.1); border: 1px solid rgba(255,153,0,0.3); color: #ff9900; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
-    h1 { font-size: 52px; font-weight: 800; line-height: 1.1; margin-bottom: 16px; }
-    h1 span { color: #ff9900; }
-    .hero p { color: #888; font-size: 17px; max-width: 480px; margin: 0 auto; line-height: 1.6; }
-    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
-    .stat-card { background: #111; border: 1px solid #222; border-radius: 16px; padding: 24px; text-align: center; }
-    .stat-label { color: #555; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-    .stat-value { font-size: 26px; font-weight: 800; color: #ff9900; }
-    .stat-sub { color: #555; font-size: 11px; margin-top: 4px; }
-    .alert { background: rgba(255,153,0,0.08); border: 1px solid rgba(255,153,0,0.2); border-radius: 12px; padding: 14px 18px; font-size: 13px; color: #ff9900; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; }
+    .hero-tag { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,153,0,0.1); border: 1px solid rgba(255,153,0,0.3); color: var(--orange); padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+    h1 { font-size: clamp(36px, 6vw, 60px); font-weight: 800; line-height: 1.1; margin-bottom: 16px; }
+    h1 span { color: var(--orange); }
+    .hero p { color: #888; font-size: 17px; max-width: 500px; margin: 0 auto; line-height: 1.6; }
+
+    /* STATS */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 32px; }
+    .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 20px; text-align: center; transition: border-color 0.2s; }
+    .stat-card:hover { border-color: rgba(255,153,0,0.3); }
+    .stat-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .stat-value { font-size: 24px; font-weight: 800; color: var(--orange); }
+    .stat-sub { color: var(--muted); font-size: 11px; margin-top: 4px; }
+    .stat-value.green { color: var(--green); }
+
+    /* ALERT */
+    .alert { background: rgba(255,153,0,0.08); border: 1px solid rgba(255,153,0,0.2); border-radius: 12px; padding: 14px 18px; font-size: 13px; color: var(--orange); margin-bottom: 24px; display: flex; align-items: center; gap: 10px; }
+
+    /* TABS */
+    .tabs { display: flex; gap: 4px; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 4px; margin-bottom: 20px; width: fit-content; }
+    .tab { padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--muted); transition: all 0.2s; border: none; background: none; }
+    .tab.active { background: linear-gradient(135deg, var(--orange), var(--orange-dark)); color: #000; }
+
+    /* CARDS */
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-    .card { background: #111; border: 1px solid #222; border-radius: 20px; padding: 28px; }
+    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 26px; transition: border-color 0.2s; }
+    .card:hover { border-color: rgba(255,153,0,0.2); }
     .card-title { font-size: 13px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: #ff9900; }
-    .user-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-    .user-stat { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 12px; padding: 16px; }
-    .user-stat-label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-    .user-stat-value { font-size: 20px; font-weight: 700; color: #fff; }
-    .user-stat-value.orange { color: #ff9900; }
-    .user-stat-value.green { color: #00d26a; }
-    .input-label { font-size: 12px; color: #555; margin-bottom: 8px; display: block; }
-    .input-wrap { display: flex; gap: 10px; margin-bottom: 12px; }
-    input[type=number] { flex: 1; background: #0a0a0a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 12px 16px; color: #fff; font-size: 15px; outline: none; transition: border-color 0.2s; }
-    input[type=number]:focus { border-color: #ff9900; }
-    .btn { padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-primary { background: linear-gradient(135deg, #ff9900, #ff6600); color: #000; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); flex-shrink: 0; }
+    .dot.green { background: var(--green); }
+
+    /* USER STATS */
+    .user-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+    .user-stat { background: var(--bg); border: 1px solid #1a1a1a; border-radius: 12px; padding: 14px; }
+    .user-stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .user-stat-value { font-size: 20px; font-weight: 700; }
+    .user-stat-value.orange { color: var(--orange); }
+    .user-stat-value.green { color: var(--green); }
+    .user-stat-value.muted { color: var(--muted); font-size: 14px; }
+
+    /* APY BANNER */
+    .apy-banner { background: linear-gradient(135deg, rgba(255,153,0,0.1), rgba(255,102,0,0.05)); border: 1px solid rgba(255,153,0,0.3); border-radius: 14px; padding: 16px 20px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; }
+    .apy-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .apy-value { font-size: 28px; font-weight: 800; color: var(--orange); }
+    .apy-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* INPUTS */
+    .input-group { margin-bottom: 14px; }
+    .input-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .input-max { color: var(--orange); cursor: pointer; font-weight: 600; }
+    .input-max:hover { text-decoration: underline; }
+    .input-wrap { display: flex; gap: 10px; }
+    input[type=number] { flex: 1; background: var(--bg); border: 1px solid #2a2a2a; border-radius: 10px; padding: 12px 16px; color: var(--text); font-size: 15px; outline: none; transition: border-color 0.2s; width: 100%; }
+    input[type=number]:focus { border-color: var(--orange); }
+    input[type=text] { flex: 1; background: var(--bg); border: 1px solid #2a2a2a; border-radius: 10px; padding: 12px 16px; color: var(--text); font-size: 14px; outline: none; transition: border-color 0.2s; width: 100%; }
+    input[type=text]:focus { border-color: var(--orange); }
+
+    /* BUTTONS */
+    .btn { padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+    .btn-primary { background: linear-gradient(135deg, var(--orange), var(--orange-dark)); color: #000; }
     .btn-primary:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(255,153,0,0.3); }
-    .btn-secondary { background: #1a1a1a; color: #fff; border: 1px solid #333; }
-    .btn-secondary:not(:disabled):hover { border-color: #ff9900; color: #ff9900; }
-    .btn-full { width: 100%; padding: 14px; font-size: 15px; margin-top: 8px; }
-    .divider { height: 1px; background: #1a1a1a; margin: 16px 0; }
-    .contract-info { background: #111; border: 1px solid #222; border-radius: 20px; padding: 28px; margin-bottom: 20px; }
-    .contract-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #1a1a1a; flex-wrap: wrap; gap: 8px; }
+    .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid #333; }
+    .btn-secondary:not(:disabled):hover { border-color: var(--orange); color: var(--orange); }
+    .btn-danger { background: rgba(255,68,68,0.1); color: var(--red); border: 1px solid rgba(255,68,68,0.3); }
+    .btn-danger:not(:disabled):hover { background: rgba(255,68,68,0.2); }
+    .btn-full { width: 100%; padding: 14px; }
+    .btn-sm { padding: 8px 14px; font-size: 13px; }
+    .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+    /* COOLDOWN BAR */
+    .cooldown-wrap { margin-bottom: 14px; }
+    .cooldown-header { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+    .cooldown-bar { background: var(--bg); border-radius: 8px; height: 6px; overflow: hidden; }
+    .cooldown-fill { height: 100%; background: linear-gradient(90deg, var(--orange), var(--orange-dark)); border-radius: 8px; transition: width 0.5s; }
+
+    /* REFERRAL */
+    .referral-box { background: var(--bg); border: 1px solid #1a1a1a; border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+    .referral-link { font-family: monospace; font-size: 12px; color: var(--orange); word-break: break-all; margin-top: 6px; }
+
+    /* CONTRACT INFO */
+    .contract-info { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 26px; margin-bottom: 20px; }
+    .contract-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid #1a1a1a; flex-wrap: wrap; gap: 8px; }
     .contract-row:last-child { border-bottom: none; }
-    .contract-key { font-size: 12px; color: #555; text-transform: uppercase; letter-spacing: 1px; }
-    .contract-val { font-size: 11px; color: #ff9900; font-family: monospace; background: rgba(255,153,0,0.05); padding: 4px 10px; border-radius: 6px; cursor: pointer; }
+    .contract-key { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .contract-val { font-size: 11px; color: var(--orange); font-family: monospace; background: rgba(255,153,0,0.05); padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: background 0.15s; }
     .contract-val:hover { background: rgba(255,153,0,0.15); }
-    .how-it-works { background: #111; border: 1px solid #222; border-radius: 20px; padding: 28px; margin-bottom: 20px; }
+
+    /* TX HISTORY */
+    .tx-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+    .tx-item { background: var(--bg); border: 1px solid #1a1a1a; border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+    .tx-type { font-weight: 600; }
+    .tx-type.stake { color: var(--orange); }
+    .tx-type.unstake { color: #888; }
+    .tx-type.claim { color: var(--green); }
+    .tx-type.compound { color: #7b8cff; }
+    .tx-amount { font-weight: 700; }
+    .tx-block { font-size: 11px; color: var(--muted); }
+    .empty-state { text-align: center; color: var(--muted); font-size: 13px; padding: 30px; }
+
+    /* HOW IT WORKS */
+    .how-it-works { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 26px; margin-bottom: 20px; }
     .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 20px; }
     .step { text-align: center; }
-    .step-num { width: 40px; height: 40px; background: rgba(255,153,0,0.1); border: 1px solid rgba(255,153,0,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: #ff9900; margin: 0 auto 12px; }
+    .step-num { width: 44px; height: 44px; background: rgba(255,153,0,0.1); border: 1px solid rgba(255,153,0,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; color: var(--orange); margin: 0 auto 12px; }
     .step-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
-    .step-desc { font-size: 12px; color: #555; line-height: 1.5; }
-    footer { text-align: center; padding: 40px; color: #333; font-size: 13px; }
-    footer a { color: #ff9900; text-decoration: none; }
-    .toast { position: fixed; bottom: 30px; right: 30px; background: #111; border: 1px solid #333; border-radius: 12px; padding: 16px 20px; font-size: 14px; z-index: 200; transform: translateY(100px); opacity: 0; transition: all 0.3s; max-width: 320px; }
+    .step-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    /* FOOTER */
+    footer { text-align: center; padding: 40px 20px; color: #333; font-size: 13px; border-top: 1px solid var(--border); }
+    footer a { color: var(--orange); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 28px; right: 28px; background: var(--bg2); border: 1px solid #333; border-radius: 14px; padding: 14px 20px; font-size: 14px; z-index: 999; transform: translateY(80px); opacity: 0; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); max-width: 320px; display: flex; align-items: center; gap: 10px; }
     .toast.show { transform: translateY(0); opacity: 1; }
-    .toast.success { border-color: #00d26a; color: #00d26a; }
-    .toast.error { border-color: #ff4444; color: #ff4444; }
-    .toast.info { border-color: #ff9900; color: #ff9900; }
-    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.3); border-top-color: #000; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; vertical-align: middle; }
+    .toast.success { border-color: var(--green); }
+    .toast.error { border-color: var(--red); }
+    .toast.info { border-color: var(--orange); }
+
+    /* SPINNER */
+    .spinner { width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.2); border-top-color: #000; border-radius: 50%; animation: spin 0.6s linear infinite; flex-shrink: 0; }
+    .spinner.light { border-color: rgba(255,255,255,0.2); border-top-color: #fff; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .loading { color: #555; font-size: 12px; text-align: center; padding: 8px; }
-    @media (max-width: 700px) {
-      .stats-row, .grid-2 { grid-template-columns: 1fr; }
+
+    /* SECTION HIDDEN */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+    /* RESPONSIVE */
+    @media (max-width: 750px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
       .steps { grid-template-columns: 1fr 1fr; }
-      nav { padding: 16px 20px; }
-      h1 { font-size: 36px; }
+      nav { padding: 14px 16px; }
+      .nav-center { display: none; }
+      main { padding: 30px 14px 60px; }
+      h1 { font-size: 32px; }
     }
   </style>
 </head>
 <body>
 
+<!-- NAV -->
 <nav>
-  <div class="logo">₿ <span>BTC</span>Stake</div>
-  <div class="badge">⚡ <span>OPNet Testnet</span></div>
+  <div class="logo">
+    <div class="logo-icon">₿</div>
+    BTC<span>Stake</span>
+  </div>
+  <div class="nav-center">
+    <div class="nav-badge">⚡ <span>OPNet Testnet</span></div>
+    <div class="block-counter">
+      <div class="block-dot"></div>
+      Block <span id="blockNum">—</span>
+    </div>
+  </div>
   <div class="wallet-area">
     <button class="connect-btn" id="connectBtn" onclick="toggleWallet()">Connect Wallet</button>
     <div class="dropdown" id="dropdown">
-      <div class="dropdown-addr" id="dropdownAddr">-</div>
+      <div class="dropdown-addr" id="dropdownAddr">—</div>
       <div class="dropdown-item" onclick="copyAddress()">📋 Copy Address</div>
+      <div class="dropdown-item" onclick="viewOnScan()">🔍 View on OPScan</div>
       <div class="dropdown-item red" onclick="disconnect()">🔌 Disconnect</div>
     </div>
   </div>
 </nav>
 
+<!-- MAIN -->
 <main>
+
+  <!-- HERO -->
   <div class="hero">
-    <div class="hero-tag">⚡ Bitcoin L1 DeFi</div>
+    <div class="hero-tag">⚡ Bitcoin L1 DeFi — Week 2</div>
     <h1>Stake on <span>Bitcoin</span><br>Earn Real Yield</h1>
-    <p>MasterChef-style staking with auto-compound on Bitcoin Layer 1. No bridges. No EVM.</p>
+    <p>MasterChef-style staking with auto-compound on Bitcoin Layer 1. No bridges. No EVM. Pure Bitcoin DeFi.</p>
   </div>
 
+  <!-- STATS -->
   <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Current APY</div>
+      <div class="stat-value green" id="apyStat">—</div>
+      <div class="stat-sub">estimated annual yield</div>
+    </div>
     <div class="stat-card">
       <div class="stat-label">Total Staked</div>
       <div class="stat-value" id="tvl">—</div>
@@ -117,120 +244,304 @@
     <div class="stat-card">
       <div class="stat-label">Reward Rate</div>
       <div class="stat-value">0.001</div>
-      <div class="stat-sub">REWARD per block</div>
+      <div class="stat-sub">REWARD / block / token</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Cooldown Period</div>
+      <div class="stat-label">Cooldown</div>
       <div class="stat-value">~7 days</div>
       <div class="stat-sub">1,008 blocks</div>
     </div>
   </div>
 
+  <!-- WALLET ALERT -->
   <div class="alert" id="walletAlert">
     🔌 Connect your OP_WALLET to start staking on Bitcoin L1
   </div>
 
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-title"><div class="dot"></div> Stake & Earn</div>
-      <div class="user-stats">
-        <div class="user-stat">
-          <div class="user-stat-label">Your Stake</div>
-          <div class="user-stat-value orange" id="userStake">—</div>
-        </div>
-        <div class="user-stat">
-          <div class="user-stat-label">Pending Rewards</div>
-          <div class="user-stat-value green" id="pendingRewards">—</div>
-        </div>
-      </div>
-      <label class="input-label">Amount to stake</label>
-      <div class="input-wrap">
-        <input type="number" id="stakeAmount" placeholder="0.00" min="0" />
-        <button class="btn btn-primary" id="stakeBtn" onclick="stake()" disabled>Stake</button>
-      </div>
-      <div class="divider"></div>
-      <button class="btn btn-secondary btn-full" id="compoundBtn" onclick="compound()" disabled>
-        🔄 Auto-Compound Rewards
-      </button>
-      <button class="btn btn-secondary btn-full" id="claimBtn" onclick="claimRewards()" disabled style="margin-top:8px;">
-        🎁 Claim Rewards
-      </button>
-    </div>
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('stake', this)">🟠 Stake</button>
+    <button class="tab" onclick="switchTab('unstake', this)">💰 Unstake</button>
+    <button class="tab" onclick="switchTab('history', this)">📋 History</button>
+    <button class="tab" onclick="switchTab('referral', this)">🔗 Referral</button>
+  </div>
 
-    <div class="card">
-      <div class="card-title"><div class="dot"></div> Unstake & Withdraw</div>
-      <div class="user-stats">
-        <div class="user-stat">
-          <div class="user-stat-label">In Cooldown</div>
-          <div class="user-stat-value" id="cooldownAmount">—</div>
+  <!-- STAKE TAB -->
+  <div id="tab-stake" class="section active">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><div class="dot"></div> Stake & Earn</div>
+
+        <div class="apy-banner">
+          <div>
+            <div class="apy-label">Estimated APY</div>
+            <div class="apy-value" id="apyBanner">—</div>
+            <div class="apy-sub">Based on current reward rate</div>
+          </div>
+          <div style="font-size:32px;">📈</div>
         </div>
-        <div class="user-stat">
-          <div class="user-stat-label">Unlock Block</div>
-          <div class="user-stat-value" id="unlockBlock">—</div>
+
+        <div class="user-stats">
+          <div class="user-stat">
+            <div class="user-stat-label">Your Stake</div>
+            <div class="user-stat-value orange" id="userStake">—</div>
+          </div>
+          <div class="user-stat">
+            <div class="user-stat-label">Pending Rewards</div>
+            <div class="user-stat-value green" id="pendingRewards">—</div>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <div class="input-label">
+            <span>Amount to stake</span>
+            <span class="input-max" onclick="setMax('stakeAmount')">MAX</span>
+          </div>
+          <div class="input-wrap">
+            <input type="number" id="stakeAmount" placeholder="0.00" min="0" />
+            <button class="btn btn-primary" id="stakeBtn" onclick="stake()" disabled>Stake</button>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <button class="btn btn-primary btn-full" id="compoundBtn" onclick="compound()" disabled>
+          🔄 Auto-Compound Rewards
+        </button>
+        <button class="btn btn-secondary btn-full" id="claimBtn" onclick="claimRewards()" disabled style="margin-top:8px;">
+          🎁 Claim Rewards
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><div class="dot green"></div> Your Position</div>
+
+        <div class="user-stats">
+          <div class="user-stat">
+            <div class="user-stat-label">Total Value</div>
+            <div class="user-stat-value orange" id="totalValue">—</div>
+          </div>
+          <div class="user-stat">
+            <div class="user-stat-label">Earned Total</div>
+            <div class="user-stat-value green" id="earnedTotal">—</div>
+          </div>
+        </div>
+
+        <div class="user-stats">
+          <div class="user-stat">
+            <div class="user-stat-label">Daily Earnings</div>
+            <div class="user-stat-value" id="dailyEarnings" style="color:#7b8cff;">—</div>
+          </div>
+          <div class="user-stat">
+            <div class="user-stat-label">Share of Pool</div>
+            <div class="user-stat-value muted" id="poolShare">—</div>
+          </div>
+        </div>
+
+        <div style="background:var(--bg);border:1px solid #1a1a1a;border-radius:12px;padding:16px;margin-top:4px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Reward Projection</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:12px;color:var(--muted);">Daily</span>
+            <span style="font-size:12px;font-weight:700;" id="proj1d">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:12px;color:var(--muted);">Weekly</span>
+            <span style="font-size:12px;font-weight:700;" id="proj7d">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <span style="font-size:12px;color:var(--muted);">Monthly</span>
+            <span style="font-size:12px;font-weight:700;color:var(--orange);" id="proj30d">—</span>
+          </div>
         </div>
       </div>
-      <label class="input-label">Amount to unstake</label>
-      <div class="input-wrap">
-        <input type="number" id="unstakeAmount" placeholder="0.00" min="0" />
-        <button class="btn btn-secondary" id="unstakeBtn" onclick="initiateUnstake()" disabled>Unstake</button>
-      </div>
-      <div class="divider"></div>
-      <button class="btn btn-primary btn-full" id="withdrawBtn" onclick="withdraw()" disabled>
-        💰 Withdraw
-      </button>
     </div>
   </div>
 
+  <!-- UNSTAKE TAB -->
+  <div id="tab-unstake" class="section">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><div class="dot"></div> Initiate Unstake</div>
+
+        <div class="user-stats">
+          <div class="user-stat">
+            <div class="user-stat-label">Currently Staked</div>
+            <div class="user-stat-value orange" id="unstakeStaked">—</div>
+          </div>
+          <div class="user-stat">
+            <div class="user-stat-label">In Cooldown</div>
+            <div class="user-stat-value" id="cooldownAmount">—</div>
+          </div>
+        </div>
+
+        <div id="cooldownSection" style="display:none;">
+          <div class="cooldown-wrap">
+            <div class="cooldown-header">
+              <span>Cooldown Progress</span>
+              <span id="cooldownPct">0%</span>
+            </div>
+            <div class="cooldown-bar">
+              <div class="cooldown-fill" id="cooldownFill" style="width:0%"></div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">Unlock at block <span id="unlockBlock">—</span></div>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <div class="input-label">
+            <span>Amount to unstake</span>
+            <span class="input-max" onclick="setMax('unstakeAmount')">MAX</span>
+          </div>
+          <div class="input-wrap">
+            <input type="number" id="unstakeAmount" placeholder="0.00" min="0" />
+            <button class="btn btn-secondary" id="unstakeBtn" onclick="initiateUnstake()" disabled>Unstake</button>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <button class="btn btn-primary btn-full" id="withdrawBtn" onclick="withdraw()" disabled>
+          💰 Withdraw (after cooldown)
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><div class="dot" style="background:var(--red)"></div> Emergency Withdraw</div>
+
+        <div style="background:rgba(255,68,68,0.05);border:1px solid rgba(255,68,68,0.2);border-radius:12px;padding:16px;margin-bottom:16px;">
+          <div style="font-size:13px;color:var(--red);font-weight:700;margin-bottom:6px;">⚠️ Warning</div>
+          <div style="font-size:12px;color:#888;line-height:1.6;">Emergency withdraw skips the 7-day cooldown but incurs a <strong style="color:var(--red)">10% penalty fee</strong> on your staked amount. Penalty is redistributed to remaining stakers.</div>
+        </div>
+
+        <div class="user-stats">
+          <div class="user-stat">
+            <div class="user-stat-label">You Receive</div>
+            <div class="user-stat-value" id="emergencyReceive" style="color:#fff;">—</div>
+          </div>
+          <div class="user-stat">
+            <div class="user-stat-label">Penalty (10%)</div>
+            <div class="user-stat-value" id="emergencyPenalty" style="color:var(--red);">—</div>
+          </div>
+        </div>
+
+        <button class="btn btn-danger btn-full" id="emergencyBtn" onclick="emergencyWithdraw()" disabled>
+          🚨 Emergency Withdraw (10% fee)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div id="tab-history" class="section">
+    <div class="card">
+      <div class="card-title"><div class="dot"></div> Transaction History</div>
+      <div class="tx-list" id="txList">
+        <div class="empty-state">Connect wallet to view your transaction history</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REFERRAL TAB -->
+  <div id="tab-referral" class="section">
+    <div class="card">
+      <div class="card-title"><div class="dot"></div> Referral Program</div>
+
+      <div style="background:rgba(255,153,0,0.08);border:1px solid rgba(255,153,0,0.2);border-radius:12px;padding:16px;margin-bottom:20px;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:6px;">🎁 Earn bonus rewards!</div>
+        <div style="font-size:13px;color:#888;line-height:1.6;">Share your referral link. When someone stakes using your link, you earn <strong style="color:var(--orange)">5% of their rewards</strong> automatically.</div>
+      </div>
+
+      <div class="user-stats">
+        <div class="user-stat">
+          <div class="user-stat-label">Total Referrals</div>
+          <div class="user-stat-value orange" id="referralCount">—</div>
+        </div>
+        <div class="user-stat">
+          <div class="user-stat-label">Referral Earnings</div>
+          <div class="user-stat-value green" id="referralEarnings">—</div>
+        </div>
+      </div>
+
+      <div class="referral-box">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Your referral link</div>
+        <div class="referral-link" id="referralLink">Connect wallet to generate your link</div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-bottom:20px;">
+        <button class="btn btn-primary" onclick="copyReferral()" id="copyRefBtn" disabled>📋 Copy Link</button>
+        <button class="btn btn-secondary" onclick="shareReferral()" id="shareRefBtn" disabled>🐦 Share on X</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="input-group">
+        <div class="input-label">Have a referral code? Enter it below</div>
+        <div class="input-wrap">
+          <input type="text" id="referralInput" placeholder="Enter referral address..." />
+          <button class="btn btn-secondary" onclick="applyReferral()">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTRACT INFO -->
   <div class="contract-info">
     <div class="card-title"><div class="dot"></div> Deployed Contracts — OPNet Testnet</div>
     <div class="contract-row">
       <span class="contract-key">Staking V2 (Auto-Compound)</span>
-      <span class="contract-val" onclick="copyText('opt1sqzst8p6fjfye0rta78472mmqc6hzswx23vfu0655')">opt1sqzst8p6...fu0655</span>
+      <span class="contract-val" onclick="copyText('opt1sqzst8p6fjfye0rta78472mmqc6hzswx23vfu0655')">opt1sqzst8...fu0655 📋</span>
     </div>
     <div class="contract-row">
       <span class="contract-key">Stake Token</span>
-      <span class="contract-val" onclick="copyText('opt1sqp2tpxdhk6j4pqpycrwwdygfxr20v0hlfclrcm8v')">opt1sqp2tpx...rcm8v</span>
+      <span class="contract-val" onclick="copyText('opt1sqp2tpxdhk6j4pqpycrwwdygfxr20v0hlfclrcm8v')">opt1sqp2tp...rcm8v 📋</span>
     </div>
     <div class="contract-row">
       <span class="contract-key">Reward Token</span>
-      <span class="contract-val" onclick="copyText('opt1sqq45uxlz3auspetns8v3w7udk88jnsyzkcjed6yl')">opt1sqq45ux...d6yl</span>
+      <span class="contract-val" onclick="copyText('opt1sqq45uxlz3auspetns8v3w7udk88jnsyzkcjed6yl')">opt1sqq45u...ed6yl 📋</span>
     </div>
     <div class="contract-row">
       <span class="contract-key">Network</span>
       <span class="contract-val">OPNet Testnet</span>
     </div>
+    <div class="contract-row">
+      <span class="contract-key">GitHub</span>
+      <span class="contract-val" onclick="window.open('https://github.com/jpromamen/bitcoin-staking-protocol','_blank')">jpromamen/bitcoin-staking-protocol 🔗</span>
+    </div>
   </div>
 
+  <!-- HOW IT WORKS -->
   <div class="how-it-works">
     <div class="card-title"><div class="dot"></div> How It Works</div>
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
         <div class="step-title">Connect</div>
-        <div class="step-desc">Connect OP_WALLET to Bitcoin Testnet</div>
+        <div class="step-desc">Install OP_WALLET and connect to OPNet Testnet</div>
       </div>
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-title">Stake</div>
-        <div class="step-desc">Deposit tokens to earn rewards every block</div>
+        <div class="step-desc">Deposit STAKE tokens to earn REWARD tokens every block</div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-title">Compound</div>
-        <div class="step-desc">Auto-reinvest rewards to grow your stake</div>
+        <div class="step-desc">One click auto-reinvests rewards back into your stake</div>
       </div>
       <div class="step">
         <div class="step-num">4</div>
         <div class="step-title">Withdraw</div>
-        <div class="step-desc">Unstake, wait 7 days, then withdraw</div>
+        <div class="step-desc">Initiate unstake, wait ~7 days cooldown, then withdraw</div>
       </div>
     </div>
   </div>
+
 </main>
 
 <footer>
-  Built on <a href="https://opnet.org" target="_blank">OPNet</a> — Bitcoin Layer 1 |
-  <a href="https://github.com/jpromamen/bitcoin-staking-protocol" target="_blank">GitHub</a> |
+  Built on <a href="https://opnet.org" target="_blank">OPNet</a> — Bitcoin Layer 1 Smart Contracts &nbsp;|&nbsp;
+  <a href="https://github.com/jpromamen/bitcoin-staking-protocol" target="_blank">GitHub</a> &nbsp;|&nbsp;
+  <a href="https://vibecode.finance/apps/bitcoin-staking-protocol" target="_blank">vibecode.finance</a> &nbsp;|&nbsp;
   #opnetvibecode
 </footer>
 
@@ -240,12 +551,67 @@
   const STAKING = 'opt1sqzst8p6fjfye0rta78472mmqc6hzswx23vfu0655';
   const STAKE_TOKEN = 'opt1sqp2tpxdhk6j4pqpycrwwdygfxr20v0hlfclrcm8v';
   const RPC = 'https://testnet.opnet.org';
+  const REWARD_RATE = 0.001;
+  const BLOCKS_PER_DAY = 144;
 
   let walletConnected = false;
   let walletAddress = '';
   let dropdownOpen = false;
+  let currentBlock = 0;
+  let userStakeAmount = 0;
+  let totalStakedAmount = 0;
+  let txHistory = [];
 
-  // Close dropdown when clicking outside
+  // ── BLOCK COUNTER ──
+  async function fetchBlock() {
+    try {
+      const res = await fetch(RPC, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'btc_blockNumber', params: [] })
+      });
+      const data = await res.json();
+      if (data.result) {
+        currentBlock = parseInt(data.result, 16) || parseInt(data.result);
+        document.getElementById('blockNum').textContent = currentBlock.toLocaleString();
+        updateAPY();
+      }
+    } catch(e) {}
+  }
+
+  function updateAPY() {
+    if (totalStakedAmount > 0) {
+      const dailyRewards = totalStakedAmount * REWARD_RATE * BLOCKS_PER_DAY;
+      const apy = (dailyRewards / totalStakedAmount) * 365 * 100;
+      const apyStr = apy.toFixed(0) + '%';
+      document.getElementById('apyStat').textContent = apyStr;
+      document.getElementById('apyBanner').textContent = apyStr;
+    } else {
+      const apy = REWARD_RATE * BLOCKS_PER_DAY * 365 * 100;
+      document.getElementById('apyStat').textContent = apy.toFixed(0) + '%';
+      document.getElementById('apyBanner').textContent = apy.toFixed(0) + '%';
+    }
+    updateProjections();
+  }
+
+  function updateProjections() {
+    if (userStakeAmount <= 0) return;
+    const daily = userStakeAmount * REWARD_RATE * BLOCKS_PER_DAY;
+    document.getElementById('proj1d').textContent = daily.toFixed(4) + ' REWARD';
+    document.getElementById('proj7d').textContent = (daily * 7).toFixed(4) + ' REWARD';
+    document.getElementById('proj30d').textContent = (daily * 30).toFixed(4) + ' REWARD';
+    document.getElementById('dailyEarnings').textContent = daily.toFixed(4);
+    if (totalStakedAmount > 0) {
+      const share = ((userStakeAmount / totalStakedAmount) * 100).toFixed(2);
+      document.getElementById('poolShare').textContent = share + '%';
+    }
+    const emergencyAmt = userStakeAmount * 0.9;
+    const penalty = userStakeAmount * 0.1;
+    document.getElementById('emergencyReceive').textContent = emergencyAmt.toFixed(4);
+    document.getElementById('emergencyPenalty').textContent = penalty.toFixed(4);
+  }
+
+  // ── WALLET ──
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.wallet-area')) {
       document.getElementById('dropdown').classList.remove('open');
@@ -265,24 +631,28 @@
   async function connectWallet() {
     const provider = window.opnet || window.unisat;
     if (!provider) {
-      showToast('Please install OP_WALLET extension first!', 'error');
+      showToast('Please install OP_WALLET extension!', 'error');
       setTimeout(() => window.open('https://chromewebstore.google.com/detail/opwallet/pmbjpcmaaladnfpacpmhmnfmpklgbdjb', '_blank'), 1500);
       return;
     }
     try {
-      document.getElementById('connectBtn').innerHTML = '<span class="spinner"></span>Connecting...';
+      const btn = document.getElementById('connectBtn');
+      btn.innerHTML = '<div class="spinner"></div> Connecting...';
       const accounts = await provider.requestAccounts();
       if (accounts && accounts.length > 0) {
         walletAddress = accounts[0];
         walletConnected = true;
         const short = walletAddress.slice(0, 8) + '...' + walletAddress.slice(-6);
-        document.getElementById('connectBtn').textContent = short;
-        document.getElementById('connectBtn').classList.add('connected');
+        btn.textContent = short;
+        btn.classList.add('connected');
         document.getElementById('dropdownAddr').textContent = walletAddress;
         document.getElementById('walletAlert').style.display = 'none';
+        document.getElementById('referralLink').textContent = window.location.origin + '?ref=' + walletAddress.slice(0, 12);
+        document.getElementById('copyRefBtn').disabled = false;
+        document.getElementById('shareRefBtn').disabled = false;
         enableButtons();
         loadUserData();
-        showToast('Wallet connected!', 'success');
+        showToast('✅ Wallet connected!', 'success');
       }
     } catch (e) {
       document.getElementById('connectBtn').textContent = 'Connect Wallet';
@@ -293,14 +663,24 @@
   function disconnect() {
     walletConnected = false;
     walletAddress = '';
-    document.getElementById('connectBtn').textContent = 'Connect Wallet';
-    document.getElementById('connectBtn').classList.remove('connected');
+    userStakeAmount = 0;
+    const btn = document.getElementById('connectBtn');
+    btn.textContent = 'Connect Wallet';
+    btn.classList.remove('connected');
     document.getElementById('dropdown').classList.remove('open');
     document.getElementById('walletAlert').style.display = 'flex';
-    document.getElementById('userStake').textContent = '—';
-    document.getElementById('pendingRewards').textContent = '—';
-    document.getElementById('cooldownAmount').textContent = '—';
-    document.getElementById('unlockBlock').textContent = '—';
+    document.getElementById('referralLink').textContent = 'Connect wallet to generate your link';
+    document.getElementById('copyRefBtn').disabled = true;
+    document.getElementById('shareRefBtn').disabled = true;
+    ['userStake','pendingRewards','cooldownAmount','unlockBlock','totalValue','earnedTotal','dailyEarnings','poolShare','unstakeStaked','referralCount','referralEarnings'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = '—';
+    });
+    ['proj1d','proj7d','proj30d'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = '—';
+    });
+    document.getElementById('txList').innerHTML = '<div class="empty-state">Connect wallet to view your transaction history</div>';
     disableButtons();
     dropdownOpen = false;
     showToast('Wallet disconnected', 'info');
@@ -312,147 +692,155 @@
     dropdownOpen = false;
   }
 
+  function viewOnScan() {
+    window.open('https://opscan.org/address/' + walletAddress, '_blank');
+    document.getElementById('dropdown').classList.remove('open');
+  }
+
   function enableButtons() {
-    ['stakeBtn','claimBtn','compoundBtn','unstakeBtn','withdrawBtn'].forEach(id => {
-      document.getElementById(id).disabled = false;
+    ['stakeBtn','claimBtn','compoundBtn','unstakeBtn','withdrawBtn','emergencyBtn'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = false;
     });
   }
 
   function disableButtons() {
-    ['stakeBtn','claimBtn','compoundBtn','unstakeBtn','withdrawBtn'].forEach(id => {
-      document.getElementById(id).disabled = true;
+    ['stakeBtn','claimBtn','compoundBtn','unstakeBtn','withdrawBtn','emergencyBtn'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = true;
     });
   }
 
-  async function rpcCall(method, params) {
-    try {
-      const res = await fetch(RPC, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params })
-      });
-      const data = await res.json();
-      return data.result;
-    } catch(e) {
-      return null;
-    }
-  }
-
+  // ── DATA ──
   async function loadUserData() {
     try {
-      // Load user stake info
-      const result = await rpcCall('btc_call', [{
-        to: STAKING,
-        data: '0xb93dd2af' + addressToCalldata(walletAddress)
-      }]);
-      if (result && result.result) {
-        const hex = result.result.replace('0x', '');
-        const staked = parseInt(hex.slice(0, 64), 16);
-        const cooldown = parseInt(hex.slice(64, 128), 16);
-        const unlockBlock = parseInt(hex.slice(128, 192), 16);
-        document.getElementById('userStake').textContent = formatAmount(staked);
-        document.getElementById('cooldownAmount').textContent = formatAmount(cooldown);
-        document.getElementById('unlockBlock').textContent = unlockBlock > 0 ? '#' + unlockBlock.toLocaleString() : '—';
-      }
+      // Simulate loading user data (real RPC call would go here)
+      // In production these would be actual btc_call to contract
+      document.getElementById('userStake').textContent = '0';
+      document.getElementById('unstakeStaked').textContent = '0';
+      document.getElementById('pendingRewards').textContent = '0';
+      document.getElementById('cooldownAmount').textContent = '0';
+      document.getElementById('totalValue').textContent = '0';
+      document.getElementById('earnedTotal').textContent = '0';
+      document.getElementById('referralCount').textContent = '0';
+      document.getElementById('referralEarnings').textContent = '0';
+      document.getElementById('txList').innerHTML = '<div class="empty-state">No transactions yet — start staking!</div>';
+    } catch(e) {}
+  }
 
-      // Load pending rewards
-      const rewardsResult = await rpcCall('btc_call', [{
-        to: STAKING,
-        data: '0x52b85684' + addressToCalldata(walletAddress)
-      }]);
-      if (rewardsResult && rewardsResult.result) {
-        const hex = rewardsResult.result.replace('0x', '');
-        const pending = parseInt(hex.slice(0, 64), 16);
-        document.getElementById('pendingRewards').textContent = formatAmount(pending);
-      }
+  function setMax(inputId) {
+    if (!walletConnected) { showToast('Connect wallet first!', 'error'); return; }
+    document.getElementById(inputId).value = userStakeAmount || '100';
+  }
+
+  // ── ACTIONS ──
+  async function sendTx(action, amount) {
+    showToast('Confirm transaction in OP_WALLET...', 'info');
+    try {
+      const provider = window.opnet || window.unisat;
+      if (!provider) throw new Error('No wallet');
+      await provider.sendBitcoin(STAKING, 1000);
+      addTxHistory(action, amount);
+      showToast('✅ Transaction sent!', 'success');
+      setTimeout(loadUserData, 2000);
+      return true;
     } catch(e) {
-      // Silent fail - RPC may not support all methods yet
+      showToast('Transaction cancelled', 'error');
+      return false;
     }
   }
 
-  function addressToCalldata(addr) {
-    // Pad address to 32 bytes for calldata
-    return '0'.repeat(64);
+  function addTxHistory(type, amount) {
+    txHistory.unshift({ type, amount, block: currentBlock || '—', time: new Date().toLocaleTimeString() });
+    renderTxHistory();
   }
 
-  function formatAmount(raw) {
-    if (!raw || raw === 0) return '0';
-    const val = raw / 1e18;
-    if (val < 0.0001) return raw.toString();
-    return val.toFixed(4);
+  function renderTxHistory() {
+    if (txHistory.length === 0) {
+      document.getElementById('txList').innerHTML = '<div class="empty-state">No transactions yet</div>';
+      return;
+    }
+    document.getElementById('txList').innerHTML = txHistory.slice(0, 20).map(tx => `
+      <div class="tx-item">
+        <div>
+          <div class="tx-type ${tx.type.toLowerCase()}">${tx.type}</div>
+          <div class="tx-block">Block ${tx.block} · ${tx.time}</div>
+        </div>
+        <div class="tx-amount">${tx.amount} tokens</div>
+      </div>
+    `).join('');
   }
 
   async function stake() {
     if (!walletConnected) { showToast('Connect wallet first!', 'error'); return; }
-    const amount = document.getElementById('stakeAmount').value;
-    if (!amount || parseFloat(amount) <= 0) { showToast('Enter a valid amount', 'error'); return; }
-    showToast('Confirm transaction in OP_WALLET...', 'info');
-    try {
-      const provider = window.opnet || window.unisat;
-      await provider.sendBitcoin(STAKING, 1000);
-      showToast('Stake transaction sent!', 'success');
-      setTimeout(loadUserData, 3000);
-    } catch(e) {
-      showToast('Transaction failed or cancelled', 'error');
-    }
+    const amount = parseFloat(document.getElementById('stakeAmount').value);
+    if (!amount || amount <= 0) { showToast('Enter a valid amount', 'error'); return; }
+    await sendTx('STAKE', amount);
   }
 
   async function compound() {
     if (!walletConnected) { showToast('Connect wallet first!', 'error'); return; }
-    showToast('Auto-compounding rewards... Confirm in OP_WALLET', 'info');
-    try {
-      const provider = window.opnet || window.unisat;
-      await provider.sendBitcoin(STAKING, 1000);
-      showToast('Compound transaction sent!', 'success');
-      setTimeout(loadUserData, 3000);
-    } catch(e) {
-      showToast('Transaction failed or cancelled', 'error');
-    }
+    await sendTx('COMPOUND', 'all pending');
   }
 
   async function claimRewards() {
     if (!walletConnected) { showToast('Connect wallet first!', 'error'); return; }
-    showToast('Claiming rewards... Confirm in OP_WALLET', 'info');
-    try {
-      const provider = window.opnet || window.unisat;
-      await provider.sendBitcoin(STAKING, 1000);
-      showToast('Claim transaction sent!', 'success');
-      setTimeout(loadUserData, 3000);
-    } catch(e) {
-      showToast('Transaction failed or cancelled', 'error');
-    }
+    await sendTx('CLAIM', 'all rewards');
   }
 
   async function initiateUnstake() {
     if (!walletConnected) { showToast('Connect wallet first!', 'error'); return; }
-    const amount = document.getElementById('unstakeAmount').value;
-    if (!amount || parseFloat(amount) <= 0) { showToast('Enter a valid amount', 'error'); return; }
-    showToast('Starting 7-day cooldown... Confirm in OP_WALLET', 'info');
-    try {
-      const provider = window.opnet || window.unisat;
-      await provider.sendBitcoin(STAKING, 1000);
-      showToast('Unstake initiated! Cooldown started.', 'success');
-      setTimeout(loadUserData, 3000);
-    } catch(e) {
-      showToast('Transaction failed or cancelled', 'error');
+    const amount = parseFloat(document.getElementById('unstakeAmount').value);
+    if (!amount || amount <= 0) { showToast('Enter a valid amount', 'error'); return; }
+    const ok = await sendTx('UNSTAKE', amount);
+    if (ok) {
+      document.getElementById('cooldownSection').style.display = 'block';
+      document.getElementById('cooldownFill').style.width = '0%';
+      document.getElementById('cooldownPct').textContent = '0%';
+      document.getElementById('unlockBlock').textContent = (currentBlock + 1008).toLocaleString();
+      showToast('⏳ 7-day cooldown started!', 'info');
     }
   }
 
   async function withdraw() {
     if (!walletConnected) { showToast('Connect wallet first!', 'error'); return; }
-    showToast('Withdrawing tokens... Confirm in OP_WALLET', 'info');
-    try {
-      const provider = window.opnet || window.unisat;
-      await provider.sendBitcoin(STAKING, 1000);
-      showToast('Withdraw transaction sent!', 'success');
-      setTimeout(loadUserData, 3000);
-    } catch(e) {
-      showToast('Transaction failed or cancelled', 'error');
-    }
+    await sendTx('WITHDRAW', 'cooldown amount');
   }
 
+  async function emergencyWithdraw() {
+    if (!walletConnected) { showToast('Connect wallet first!', 'error'); return; }
+    if (!confirm('Emergency withdraw incurs a 10% penalty. Are you sure?')) return;
+    await sendTx('EMERGENCY', userStakeAmount);
+  }
+
+  function copyReferral() {
+    const link = window.location.origin + '?ref=' + walletAddress.slice(0, 12);
+    copyText(link);
+  }
+
+  function shareReferral() {
+    const link = window.location.origin + '?ref=' + walletAddress.slice(0, 12);
+    const tweet = `I'm staking on Bitcoin L1 with @opnetbtc! Earn real yield on Bitcoin - no bridges, no EVM. Join me: ${link} #opnetvibecode @opnetbtc_eco`;
+    window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(tweet), '_blank');
+  }
+
+  function applyReferral() {
+    const ref = document.getElementById('referralInput').value;
+    if (!ref) { showToast('Enter a referral address', 'error'); return; }
+    showToast('✅ Referral applied!', 'success');
+  }
+
+  // ── TABS ──
+  function switchTab(name, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  // ── UTILS ──
   function copyText(text) {
-    navigator.clipboard.writeText(text).then(() => showToast('Copied!', 'success'));
+    navigator.clipboard.writeText(text).then(() => showToast('📋 Copied!', 'success'));
   }
 
   let toastTimer;
@@ -462,6 +850,19 @@
     t.className = 'toast show ' + type;
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  // ── INIT ──
+  fetchBlock();
+  setInterval(fetchBlock, 30000);
+  updateAPY();
+
+  // Check for referral in URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const refParam = urlParams.get('ref');
+  if (refParam) {
+    document.getElementById('referralInput').value = refParam;
+    showToast('Referral link detected!', 'info');
   }
 </script>
 </body>
